@@ -10,7 +10,7 @@ from .solver import Solver
 queens_solver = func.Blueprint()
 
 @queens_solver.function_name(name="QueensSolverTrigger")
-@queens_solver.route(route="queens", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
+@queens_solver.route(route="queens/solve", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
 def queens_solver_trigger(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # Read the image from the POST body
