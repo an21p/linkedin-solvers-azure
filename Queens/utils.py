@@ -4,7 +4,6 @@ from collections import OrderedDict
 from PIL import Image
 from io import BytesIO
 
-
 def detect_grid_size(warped_bin, mult=0.2):
     """
     Given a binary (0/255) top‑down view of the grid (black lines on white),
@@ -67,7 +66,7 @@ def image_to_grid_array_auto(image_blob, warp_size=800):
                    dtype="float32")
     M = cv2.getPerspectiveTransform(rect, dst)
     warped = cv2.warpPerspective(img, M, (warp_size, warp_size))
-    cv2.imwrite("data/result.png", warped)
+    # cv2.imwrite("data/result.png", warped)
 
     # make a binary grid‐line image to detect lines
     warped_gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
@@ -96,10 +95,10 @@ def image_to_grid_array_auto(image_blob, warp_size=800):
                 palette[avg_color] = len(palette)
             grid[r, c] = palette[avg_color]
 
-    return palette, [[int(x) for x in y] for y in grid]
+    return palette, [[(int(x), False) for x in y] for y in grid]
 
 
-def grid_array_to_png(grid_array, palette, cell_size=50, border=2):
+def grid_array_to_png(grid_array, palette, cell_size=40, border=2):
     """
     Turn an array into an image of colored blocks
     and save it as a PNG.
@@ -120,13 +119,21 @@ def grid_array_to_png(grid_array, palette, cell_size=50, border=2):
 
     for r in range(rows):
         for c in range(cols):
-            color = colors[grid_array[r][c]
-                           ][0] if grid_array[r][c] >= 0 else 'black'
+            color_key, hasQ = grid_array[r][c]
+            color = colors[color_key][0]
             block = Image.new('RGB', (cell_size, cell_size), color)
 
             x = border + c * (cell_size + border)
             y = border + r * (cell_size + border)
             img.paste(block, (x, y))
+
+            if (hasQ):
+                # Resize the queen image to fit within the cell before pasting it with transparency
+                queen_img = Image.open('data/queen.png').convert('RGBA')
+                queen_img = queen_img.resize((cell_size-10, cell_size-10))
+                x = 5 + border + c * (cell_size + border)
+                y = 5 + border + r * (cell_size + border)
+                img.paste(queen_img, (x, y), queen_img)
 
     buf = BytesIO()
     img.save(buf, format="PNG")
@@ -142,18 +149,18 @@ if __name__ == "__main__":
     # This part is just for testing and can be removed in production code
     import sys
 
-    if len(sys.argv) != 2:
-        print("Usage: python utils.py <image_path>")
-        sys.exit(1)
+    # if len(sys.argv) != 2:
+    #     print("Usage: python utils.py <image_path>")
+    #     sys.exit(1)
 
-    image_path = sys.argv[1]
+    image_path = sys.argv[1] if len(sys.argv) > 1 else "/Users/pishias/code/python/queens/data/0_input.png"
     with open(image_path, "rb") as f:
         image_blob = f.read()
 
     palette, grid_array = image_to_grid_array_auto(image_blob)
     png_data = grid_array_to_png(grid_array, palette)
     
-    with open("output_grid.png", "wb") as out_file:
+    with open("output/0_grid.png", "wb") as out_file:
         out_file.write(png_data)
     
     print("Grid image saved as output_grid.png")
