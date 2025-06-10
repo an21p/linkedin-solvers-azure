@@ -34,7 +34,7 @@ def detect_grid_size(warped_bin, mult=0.2):
 def image_to_grid_array_auto(image_blob, warp_size=800):
     # — same preprocessing, find largest 4‑corner contour, do the warp —
     img_array = np.frombuffer(image_blob, np.uint8)
-    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR_RGB)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
     th = cv2.adaptiveThreshold(blur, 255,
@@ -135,3 +135,25 @@ def grid_array_to_png(grid_array, palette, cell_size=50, border=2):
 
 # Usage example (assuming you already have `arr`):
 # png_file = grid_array_to_png(arr, cell_size=60, output_path='/mnt/data/mygrid.png')
+
+
+if __name__ == "__main__":
+    # Example usage
+    # This part is just for testing and can be removed in production code
+    import sys
+
+    if len(sys.argv) != 2:
+        print("Usage: python utils.py <image_path>")
+        sys.exit(1)
+
+    image_path = sys.argv[1]
+    with open(image_path, "rb") as f:
+        image_blob = f.read()
+
+    palette, grid_array = image_to_grid_array_auto(image_blob)
+    png_data = grid_array_to_png(grid_array, palette)
+    
+    with open("output_grid.png", "wb") as out_file:
+        out_file.write(png_data)
+    
+    print("Grid image saved as output_grid.png")
